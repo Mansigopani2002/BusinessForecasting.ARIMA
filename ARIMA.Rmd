@@ -1,0 +1,66 @@
+---
+title: "ARIMA"
+output: html_document
+date: "2024-11-20"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+library(fpp)
+library(fpp2)
+library(forecast)
+library(readr)
+
+Data <- read.csv("C:/Users/mansi gopani/Downloads/dataset_assign.csv")
+Data_ts <- ts(Data$Monthlybeerproduction)
+plot(Data_ts)
+
+#The data shows a clear seasonal pattern that repeats over time, which is common in production or sales, where certain months consistently have higher or lower outputs. Additionally, the ups and downs in the data seem to get bigger as time goes on, suggesting that beer production becomes more variable over the years. The ARIMA model is designed to capture these patterns and trends to make accurate predictions about future beer production.
+
+ndiffs(Data_ts)
+tsdisplay(Data_ts)
+
+ts_diff <- diff(Data_ts, differences=1)
+plot(ts_diff)
+
+tsdisplay(ts_diff)
+data_auto <- auto.arima(Data_ts, trace=TRUE, stepwise = FALSE)
+data_auto
+
+attributes(data_auto)
+
+#The ARIMA(1,1,1)(0,1,1)[12] model is designed for forecasting time series with yearly seasonality. It uses one autoregressive term (p=1) and one moving average term (q=1) to capture short-term dependencies, with first differencing (d=1) to remove trends. The seasonal component applies one seasonal differencing (D=1) to address yearly patterns and includes a seasonal moving average term (Q=1) to handle seasonal error patterns, as seen in the ACF and PACF plots. This combination effectively captures both short-term trends and long-term seasonal behavior.
+
+plot(forecast(data_auto,h=5,level=c(99.5)))
+
+#The ARIMA(4,1,1) with drift model captures the upward trend and seasonal fluctuations in the data. The forecasted values show a continuation of this pattern, with the grey shaded area representing the confidence intervals that widen over time, indicating higher uncertainty for longer-term predictions. Overall, the model effectively fits the data and provides reasonable future estimates.
+
+#Residual Analysis
+Acf(data_auto$residuals)
+
+Box.test(residuals(data_auto), lag=20, type="Ljung")
+plot.ts(residuals(data_auto))
+
+hist(data_auto$residuals)
+tsdiag(data_auto)
+
+#The residuals fluctuate randomly around zero with no clear pattern, indicating the ARIMA model has captured the data well. The histogram suggests the residuals are approximately normal, and the ACF shows no significant autocorrelation. The Ljung-Box test further confirms the model's adequacy.
+
+accuracy <- accuracy(data_auto)
+print(accuracy)
+
+#The RMSE (16.48) and MAE (12.89) indicate the average errors in the predictions, while the MAPE (9.37%) shows that the model's errors are around 9% of the actual values on average. The low ACF1 value (-0.046) suggests no significant autocorrelation in the residuals, confirming a good fit.
+
+
+```
+
+## Including Plots
